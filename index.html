@@ -16,13 +16,14 @@
 <script>try{if(sessionStorage.rm_splashed)document.documentElement.classList.add("no-splash");sessionStorage.rm_splashed="1";}catch(e){}</script>
 <style>
   :root{
-    --font:'Public Sans',system-ui,-apple-system,sans-serif;
+    /* paleta alineada a la app de escritorio */
+    --font:'Public Sans',"Segoe UI",system-ui,-apple-system,sans-serif;
     --mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
-    --bg:#f4f4f5;--card:#ffffff;--ink:#18181b;--muted:#71717a;--line:#e5e7eb;--line2:#d4d4d8;
-    --brand:#1d5aa8;--brand-d:#17457f;--ref:#1d5aa8;--rem:#c2540a;
-    --ok:#15803d;--bad:#b91c1c;--warn:#a16207;--r:6px;--rk:5px;
-    --ref-bg:#eef4fb;--ref-line:#cfe0f3;--rem-bg:#fdf1e7;--rem-line:#f0d3b3;
-    --ok-bg:#f0f9f3;--ok-line:#bbe0c7;--bad-bg:#fdf2f2;--bad-line:#edc4c4;
+    --bg:#f5f6f8;--card:#ffffff;--ink:#16202e;--muted:#5d6b7f;--line:#dfe3ea;--line2:#cfd6e0;
+    --brand:#1f4e79;--brand-d:#17416a;--ref:#1f4e79;--rem:#1f4e79;
+    --ok:#1c6b3f;--bad:#a3232b;--warn:#8a5a00;--r:12px;--rk:8px;
+    --ref-bg:#eaf1f8;--ref-line:#cfe0f3;--rem-bg:#eaf1f8;--rem-line:#cfe0f3;
+    --ok-bg:#e8f5ee;--ok-line:#bbe0c7;--bad-bg:#fbeaea;--bad-line:#edc4c4;
   }
   html,body{margin:0;padding:0}
   *{box-sizing:border-box}
@@ -32,26 +33,23 @@
   @keyframes rm-spin{to{transform:rotate(360deg)}}
   @keyframes rm-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
-  /* header */
-  .app-header{background:var(--card);border-bottom:1px solid var(--line2);padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .app-header .logo{height:34px;width:auto}
-  .app-header .divider{width:1px;height:26px;background:var(--line)}
-  .app-header .htxt{flex:1;min-width:180px}
-  .app-header h1{margin:0;font-size:15px;font-weight:700;letter-spacing:-.1px}
-  .app-header .htxt p{margin:1px 0 0;font-size:12px;color:var(--muted)}
-  .chip{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+  /* header (estilo escritorio: blanco con franja de marca abajo) */
+  .app-header{background:var(--card);border-bottom:3px solid var(--brand);padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .app-header .logo{height:40px;width:auto;max-width:60vw;object-fit:contain}
+  .app-header .htxt{display:flex;flex-direction:column;gap:1px}
+  .app-header h1{margin:0;font-size:18px;font-weight:700;color:var(--brand);letter-spacing:.2px}
+  .app-header .htxt p{margin:0;font-size:12.5px;color:var(--muted)}
 
   .container{max-width:1180px;margin:0 auto;padding:16px 20px 36px}
 
-  /* tabs */
-  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--line)}
-  .tab{border:1px solid transparent;border-bottom:0;border-radius:5px 5px 0 0;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;background:transparent;color:var(--muted)}
-  .tab.active{background:var(--card);color:var(--brand);border-color:var(--line);border-bottom-color:var(--card)}
+  /* tabs (nav calma con subrayado de marca) */
+  .tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--line)}
+  .tab{border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 14px;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:-1px;background:transparent;color:var(--muted)}
+  .tab.active{color:var(--brand);border-bottom-color:var(--brand)}
 
-  /* cards */
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
-  .card.ref{border-top:3px solid var(--ref)}
-  .card.rem{border-top:3px solid var(--rem)}
+  /* cards (planas, con más aire, como el escritorio) */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:16px}
+  .card.ref,.card.rem{border-top:1px solid var(--line)}
   .cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
   .card h2{margin:0;font-size:14px;font-weight:700}
   .card h2.mut{font-size:13.5px;color:var(--muted)}
@@ -78,10 +76,10 @@
   .num-big{font-family:var(--mono);font-size:16px;font-weight:700;text-align:right;color:var(--ref)}
 
   /* buttons */
-  .btn{border:1px solid var(--brand);border-radius:var(--rk);padding:9px 20px;font-weight:700;font-size:13px;background:var(--brand);color:#fff;cursor:pointer}
+  .btn{border:1px solid var(--brand);border-radius:7px;padding:10px 20px;font-weight:600;font-size:13.5px;background:var(--brand);color:#fff;cursor:pointer}
   .btn:hover{background:var(--brand-d);border-color:var(--brand-d)}
-  .btn2{border:1px solid var(--line2);border-radius:var(--rk);padding:9px 16px;font-weight:600;font-size:13px;background:#fff;color:var(--ink);cursor:pointer}
-  .btn2:hover{background:#fafafa}
+  .btn2{border:1px solid var(--brand);border-radius:7px;padding:10px 16px;font-weight:600;font-size:13.5px;background:#fff;color:var(--brand);cursor:pointer}
+  .btn2:hover{background:var(--ref-bg)}
   .btn.hot{background:var(--rem-bg);color:var(--rem);border-color:var(--rem);font-weight:700}
   .btn.hot:hover{background:#fbe6d3}
   .btn.danger{border:1px solid var(--bad-line);background:var(--bad-bg);color:var(--bad);font-weight:600}
@@ -226,12 +224,10 @@
 <div id="splash" aria-hidden="true"><img src="Logo.png" alt=""></div>
 <header class="app-header">
   <img src="Logo.png" alt="Municipalidad" class="logo" onerror="this.style.display='none'">
-  <div class="divider"></div>
   <div class="htxt">
     <h1>Control de Remitos</h1>
-    <p>Comedor escolar · verificación de entregas</p>
+    <p>Comedores escolares</p>
   </div>
-  <span class="chip">local · sin conexión</span>
 </header>
 
 <div class="container">

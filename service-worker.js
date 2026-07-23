@@ -2,7 +2,7 @@
    Estrategia: cache-first para recursos propios (mismo origen).
    Las llamadas a las APIs de IA (Gemini/Anthropic) son de otro origen
    y NO se interceptan: siempre van a la red. */
-const CACHE = "remitos-v2";
+const CACHE = "remitos-v3";
 
 // Núcleo imprescindible: si algo de acá falla, la instalación falla (queremos saberlo).
 const CORE = [
