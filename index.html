@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Control de Remitos — Municipalidad</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d5aa8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Remitos">
+<link rel="apple-touch-icon" href="icons/apple-touch-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link href="fonts/public-sans.css" rel="stylesheet">
+<style>
+  :root{
+    --font:'Public Sans',system-ui,-apple-system,sans-serif;
+    --mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+    --bg:#f4f4f5;--card:#ffffff;--ink:#18181b;--muted:#71717a;--line:#e5e7eb;--line2:#d4d4d8;
+    --brand:#1d5aa8;--brand-d:#17457f;--ref:#1d5aa8;--rem:#c2540a;
+    --ok:#15803d;--bad:#b91c1c;--warn:#a16207;--r:6px;--rk:5px;
+    --ref-bg:#eef4fb;--ref-line:#cfe0f3;--rem-bg:#fdf1e7;--rem-line:#f0d3b3;
+    --ok-bg:#f0f9f3;--ok-line:#bbe0c7;--bad-bg:#fdf2f2;--bad-line:#edc4c4;
+  }
+  html,body{margin:0;padding:0}
+  *{box-sizing:border-box}
+  body{font-family:var(--font);font-size:14px;line-height:1.45;color:var(--ink);background:var(--bg);min-height:100vh}
+  input,select,button,textarea{font-family:inherit}
+  input:focus,select:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  @keyframes rm-spin{to{transform:rotate(360deg)}}
+  @keyframes rm-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+  /* header */
+  .app-header{background:var(--card);border-bottom:1px solid var(--line2);padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .app-header .logo{height:34px;width:auto}
+  .app-header .divider{width:1px;height:26px;background:var(--line)}
+  .app-header .htxt{flex:1;min-width:180px}
+  .app-header h1{margin:0;font-size:15px;font-weight:700;letter-spacing:-.1px}
+  .app-header .htxt p{margin:1px 0 0;font-size:12px;color:var(--muted)}
+  .chip{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+
+  .container{max-width:1180px;margin:0 auto;padding:16px 20px 36px}
+
+  /* tabs */
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--line)}
+  .tab{border:1px solid transparent;border-bottom:0;border-radius:5px 5px 0 0;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;background:transparent;color:var(--muted)}
+  .tab.active{background:var(--card);color:var(--brand);border-color:var(--line);border-bottom-color:var(--card)}
+
+  /* cards */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+  .card.ref{border-top:3px solid var(--ref)}
+  .card.rem{border-top:3px solid var(--rem)}
+  .cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+  .card h2{margin:0;font-size:14px;font-weight:700}
+  .card h2.mut{font-size:13.5px;color:var(--muted)}
+  .card .sub{color:var(--muted);font-size:12.5px;margin:2px 0 12px}
+  .flex-between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 7px;border-radius:4px}
+  .pill.ref{background:var(--ref-bg);color:var(--ref);border:1px solid var(--ref-line)}
+  .pill.rem{background:var(--rem-bg);color:var(--rem);border:1px solid var(--rem-line)}
+
+  /* help */
+  .help{display:flex;gap:9px;align-items:baseline;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:var(--rk);padding:9px 12px;margin-bottom:12px}
+  .help .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--brand);white-space:nowrap}
+  .help p{margin:0;font-size:12.5px;color:var(--muted)}
+  .help b.tref{color:var(--ref)} .help b.trem{color:var(--rem)}
+
+  /* forms */
+  label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:4px}
+  input,select{border:1px solid var(--line2);border-radius:var(--rk);background:#fff;color:var(--ink);font-size:13px;padding:7px 9px;width:100%}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+  .grid{display:grid;gap:12px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .num-big{font-family:var(--mono);font-size:16px;font-weight:700;text-align:right;color:var(--ref)}
+
+  /* buttons */
+  .btn{border:1px solid var(--brand);border-radius:var(--rk);padding:9px 20px;font-weight:700;font-size:13px;background:var(--brand);color:#fff;cursor:pointer}
+  .btn:hover{background:var(--brand-d);border-color:var(--brand-d)}
+  .btn2{border:1px solid var(--line2);border-radius:var(--rk);padding:9px 16px;font-weight:600;font-size:13px;background:#fff;color:var(--ink);cursor:pointer}
+  .btn2:hover{background:#fafafa}
+  .btn.hot{background:var(--rem-bg);color:var(--rem);border-color:var(--rem);font-weight:700}
+  .btn.hot:hover{background:#fbe6d3}
+  .btn.danger{border:1px solid var(--bad-line);background:var(--bad-bg);color:var(--bad);font-weight:600}
+  .btn.danger:hover{background:#fbe4e4}
+  .btn.sm,.btn2.sm{padding:8px 12px;font-size:12.5px}
+  .del{border:0;background:transparent;color:var(--bad);cursor:pointer;font-size:14px;padding:2px 6px}
+
+  /* source buttons */
+  .srcbtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+  .srcbtns .btn2{padding:8px 6px;font-size:12px;text-align:center}
+
+  /* IA panel */
+  .ia-panel{border:1px solid var(--line);border-radius:var(--rk);overflow:hidden}
+  .ia-body{padding:12px}
+  .ia-empty{border:1px dashed var(--line2);background:#fafafa;border-radius:var(--rk);padding:16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:7px}
+  .ia-empty .t{font-size:13px;font-weight:600}
+  .ia-ready{display:flex;flex-direction:column;gap:8px}
+  .ia-load{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+  .spinner{width:20px;height:20px;border:2px solid var(--line2);border-top-color:var(--rem);border-radius:50%;animation:rm-spin .8s linear infinite;flex:0 0 auto}
+  .ia-ok{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--ok-line);background:var(--ok-bg);border-radius:var(--rk);padding:10px 12px;font-size:12.5px}
+  .ia-ok b{color:var(--ok)}
+  .ia-err{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--bad-line);background:var(--bad-bg);border-radius:var(--rk);padding:10px 12px;font-size:12.5px;color:var(--bad)}
+  .ia-err b{color:var(--bad)}
+  .u-cell{display:flex;gap:6px;flex-wrap:wrap}
+
+  /* tables */
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--rk)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:#fafafa;border-bottom:1px solid var(--line);text-align:left;padding:7px 12px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;color:var(--muted)}
+  thead th.sub{font-size:10px;letter-spacing:.3px;font-weight:600}
+  th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+  th.cref{color:var(--ref)} th.crem{color:var(--rem)}
+  .sep{border-left:1px solid var(--line)}
+  tbody td{padding:6px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:0}
+  td .iname{font-weight:600} td .base{font-size:11px;color:var(--muted)}
+  table input,table select{font-size:12px;padding:5px 7px}
+  table input.n{font-family:var(--mono);text-align:right;width:64px}
+  table .u-cell select{width:118px}
+  .mini{font-size:12px;color:var(--muted)}
+  .bad-row td{background:var(--bad-bg)}
+  .bad-row td:first-child{border-left:3px solid var(--bad)}
+
+  /* badges */
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700}
+  .badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+  .badge.bad{background:var(--bad);color:#fff}
+  .badge.warn{background:#fdf6e7;color:var(--warn);border:1px solid #ecdcab}
+  .badge.none{color:var(--muted);font-weight:500}
+
+  /* checklist */
+  .checklist{border:1px solid var(--line);border-radius:var(--rk);overflow:hidden;margin-top:8px}
+  .chk{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+  .chk:last-child{border-bottom:0}
+  .chk input{width:auto}
+  .chk .box{width:17px;height:17px;border-radius:3px;border:1px solid var(--line2);background:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex:0 0 auto}
+  .chk input:checked+.box{background:var(--ok);border-color:var(--ok)}
+  .chk .tag{margin-left:auto;font-size:10px;font-weight:700;text-transform:uppercase}
+  .chk .tag.ob{color:var(--bad)} .chk .tag.op{color:var(--muted);font-weight:600}
+
+  /* result */
+  .card.result{border:1px solid var(--line2);padding:0;overflow:hidden}
+  .result-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .result-head h2{margin:0;font-size:14px}
+  .result-meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:2px}
+  .result-body{padding:14px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+  .stat{border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:var(--rk);padding:9px 12px}
+  .stat.ok{border-left-color:var(--ok)} .stat.bad{border-left-color:var(--bad)}
+  .stat .n{font-family:var(--mono);font-size:24px;font-weight:700;line-height:1}
+  .stat.ok .n{color:var(--ok)} .stat.bad .n{color:var(--bad)}
+  .stat .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:600;margin-top:3px}
+  .alert{display:flex;gap:8px;align-items:baseline;border:1px solid var(--bad-line);border-left:3px solid var(--bad);background:var(--bad-bg);border-radius:var(--rk);padding:9px 12px;font-size:12.5px;color:var(--bad);margin-bottom:12px}
+  .alert.good{border-color:var(--ok-line);border-left-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)}
+  .legend span b{font-weight:700}
+  .legend .lok b{color:var(--ok)} .legend .lbad b{color:var(--bad)} .legend .lwarn b{color:var(--warn)}
+  .condgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:8px}
+  .condchip{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:var(--rk);font-size:12.5px}
+  .condchip .st{margin-left:auto;font-size:10px;font-weight:700}
+  .condchip.okc{border-color:var(--ok-line)} .condchip.okc .g{color:var(--ok)} .condchip.okc .st{color:var(--ok)}
+  .condchip.badc{border-color:var(--bad-line);background:var(--bad-bg)} .condchip.badc .g,.condchip.badc .st{color:var(--bad)}
+  .condchip.opc .g,.condchip.opc .st{color:var(--muted)}
+  h3.rescond{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin:16px 0 6px}
+
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin:22px 0 0}
+  .hide{display:none}
+  details summary{cursor:pointer;font-weight:600;color:var(--brand);font-size:12.5px}
+
+  /* ---------- móvil ---------- */
+  @media (max-width:640px){
+    .container{padding:12px 12px 96px}
+    .app-header{padding:10px 12px;gap:10px}
+    .app-header .chip{display:none}
+    /* tabs deslizables en vez de amontonadas */
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .tab{flex:0 0 auto;white-space:nowrap}
+    /* inputs cómodos y sin zoom de iOS (>=16px) */
+    input,select,textarea,table input,table select{font-size:16px!important}
+    input,select{min-height:44px}
+    table input.n{width:auto;flex:1;min-width:70px}
+    table .u-cell select{width:auto;flex:1;min-width:96px}
+    /* botones de fuente del remito y acciones: full-width */
+    .srcbtns{display:flex;flex-direction:column;gap:8px}
+    .srcbtns .btn2{width:100%}
+    #a-analizar{flex:1;width:100%}
+    #a-limpiar{width:100%}
+    /* tabla "Detalle del remito" -> tarjetas apiladas (el min-width inline se anula con !important) */
+    #a-remito{min-width:0!important}
+    #a-remito thead{display:none}
+    #a-remito,#a-remito tbody,#a-remito tr,#a-remito td{display:block;width:100%}
+    .scroll:has(#a-remito){overflow-x:visible;border:0}
+    #a-remito tr{border:1px solid var(--line2);border-radius:var(--rk);padding:10px 12px;margin:0 0 10px}
+    #a-remito td{border-bottom:0;padding:5px 0}
+    #a-remito td.sep{border-left:0}
+    #a-remito td:first-child{border-bottom:1px solid var(--line);margin-bottom:6px;padding-bottom:8px}
+    #a-remito td[data-label]{display:flex;flex-direction:column;align-items:stretch;gap:4px}
+    #a-remito td[data-label]::before{content:attr(data-label);font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700}
+    #a-remito td .u-cell{justify-content:flex-start}
+    #a-remito td.num{text-align:left}
+    /* demás tablas (resultado/editor) mantienen scroll horizontal dentro de su .scroll */
+    .stat .n{font-size:20px}
+  }
+
+  @media print{
+    .app-header,.tabs,.no-print{display:none!important}
+    body{background:#fff}
+    #tab-analisis > *:not(.result){display:none!important}
+    .card.result{border:1px solid #bbb}
+  }
+</style>
+</head>
+<body>
+<header class="app-header">
+  <img src="Logo.png" alt="Municipalidad" class="logo" onerror="this.style.display='none'">
+  <div class="divider"></div>
+  <div class="htxt">
+    <h1>Control de Remitos</h1>
+    <p>Comedor escolar · verificación de entregas</p>
+  </div>
+  <span class="chip">local · sin conexión</span>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" data-tab="analisis">Análisis</div>
+    <div class="tab" data-tab="recetas">Referencia / Recetas</div>
+    <div class="tab" data-tab="condiciones">Condiciones</div>
+    <div class="tab" data-tab="config">Configuración</div>
+  </div>
+
+  <!-- ================= ANÁLISIS ================= -->
+  <section id="tab-analisis">
+    <div class="help no-print">
+      <span class="lbl">Cómo funciona</span>
+      <p>Elegís la <b class="tref">referencia</b> (lo que <u>debería</u> entregarse, según cupos) y cargás el
+      <b class="trem">remito</b> (lo que la empresa <u>realmente</u> entregó). El sistema marca lo que falta.</p>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:12px">
+      <div class="card ref" style="margin-bottom:0">
+        <div class="cardhead"><span class="pill ref">Referencia</span><h2 class="mut">Lo que debe entregarse</h2></div>
+        <div class="row" style="margin-top:8px">
+          <div style="flex:2;min-width:200px"><label>Receta de referencia</label><select id="a-receta"></select></div>
+          <div style="width:110px"><label>Cupos</label><input id="a-cupos" class="num-big" type="number" min="1" step="1" value="182"></div>
+        </div>
+      </div>
+      <div class="card rem" style="margin-bottom:0">
+        <div class="cardhead"><span class="pill rem">Remito</span><h2 class="mut">Lo que entregó la empresa</h2></div>
+        <div class="srcbtns no-print" style="margin-top:8px">
+          <button class="btn2" id="a-src-excel">Subir Excel</button>
+          <button class="btn2" id="a-src-foto" style="border-color:var(--rem);color:var(--rem);background:var(--rem-bg);font-weight:700">Foto (IA)</button>
+          <button class="btn2" id="a-src-pdf" style="border-color:var(--rem);color:var(--rem);background:var(--rem-bg);font-weight:700">PDF (IA)</button>
+          <button class="btn2" id="a-src-mano">A mano</button>
+        </div>
+        <input id="a-import-xls" type="file" accept=".xlsx,.xls,.csv" class="hide">
+        <input id="a-foto" type="file" accept="image/*" class="hide">
+        <input id="a-pdf" type="file" accept="application/pdf" class="hide">
+        <div class="ia-panel no-print"><div class="ia-body" id="a-ia-body"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between"><h2>Detalle del remito</h2></div>
+      <p class="sub">Revisá/completá lo que dice el remito para cada ítem. Si viene por <b>Unidades</b> (ej. 7 sachets de 1 L), completá cuánto trae cada una.</p>
+      <div class="scroll">
+        <table id="a-remito" style="min-width:660px">
+          <thead>
+            <tr>
+              <th rowspan="2" style="min-width:150px">Ingrediente</th>
+              <th rowspan="2" class="num cref sep">Requerido</th>
+              <th colspan="2" class="crem sep" style="text-align:center">Entregado según remito</th>
+            </tr>
+            <tr>
+              <th class="sub crem sep" style="min-width:170px">Cantidad y unidad</th>
+              <th class="sub crem" style="min-width:180px">Contenido por unidad</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row no-print" style="margin-top:12px">
+        <button class="btn" id="a-analizar">Analizar remito</button>
+        <button class="btn2" id="a-limpiar">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="card no-print">
+      <h2>Datos y condiciones del remito</h2>
+      <p class="sub">Datos identificatorios y chequeos que debe cumplir el papel del remito.</p>
+      <div class="grid g3" style="margin-bottom:6px">
+        <div><label>N° de remito</label><input id="a-nro" type="text" placeholder="R-00004-00011782"></div>
+        <div><label>Fecha del remito</label><input id="a-fecha" type="text" placeholder="22/05/2026"></div>
+        <div><label>Proveedor</label><input id="a-prov" type="text" placeholder="Panificadora José C. Paz S.A."></div>
+      </div>
+      <div class="checklist" id="a-cond-list"></div>
+    </div>
+
+    <div class="card result hide" id="a-resultado">
+      <div class="result-head">
+        <div><h2>Resultado del control</h2><div class="result-meta" id="a-res-meta"></div></div>
+        <div class="u-cell no-print">
+          <button class="btn2 sm" id="a-export">Exportar Excel</button>
+          <button class="btn2 sm" id="a-print">Imprimir / PDF</button>
+        </div>
+      </div>
+      <div class="result-body">
+        <div class="stats" id="a-stats"></div>
+        <div id="a-alerta"></div>
+        <div class="scroll">
+          <table id="a-tabla-res" style="min-width:620px">
+            <thead><tr><th>Ingrediente</th><th class="num">Requerido</th><th class="num">Entregado</th><th class="num">Diferencia</th><th>Estado</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="legend">
+          <span class="lok"><b>✓ OK</b> — igual o de más</span>
+          <span class="lbad"><b>▼ Falta</b> — entregó de menos</span>
+          <span class="lwarn"><b>⚠ Revisar</b> — unidades a chequear</span>
+        </div>
+        <div id="a-res-cond"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RECETAS ================= -->
+  <section id="tab-recetas" class="hide">
+    <div class="card ref">
+      <div class="flex-between">
+        <div><div class="cardhead"><span class="pill ref">Referencia</span></div>
+          <h2 style="margin-top:6px">Recetas — lo que debe entregarse</h2>
+          <p class="sub">Cantidad por beneficiario (PB). El sistema la multiplica por los cupos.</p></div>
+        <div class="u-cell">
+          <button class="btn2 sm" id="r-import-btn">Importar de Excel</button>
+          <input id="r-import-xls" type="file" accept=".xlsx,.xls,.csv" class="hide">
+          <button class="btn sm" id="r-nueva">+ Nueva receta</button>
+        </div>
+      </div>
+      <div id="r-import-msg" class="mini" style="margin-bottom:6px"></div>
+      <details style="margin-bottom:10px"><summary>Formato del Excel de receta</summary>
+        <p class="mini" style="margin-top:6px">1ª fila = encabezados: <b>Ingrediente</b>, <b>Unidad</b> (o "Uni"), <b>Cant. PB</b>. Opcionales: <b>Margen</b> y <b>Margen %</b>. Ignora columnas extra.</p></details>
+      <div style="max-width:320px"><label>Receta a editar</label><select id="r-select"></select></div>
+    </div>
+
+    <div class="card" id="r-editor">
+      <div class="row">
+        <div style="flex:1;min-width:220px"><label>Nombre de la receta</label><input id="r-nombre" type="text" placeholder="Ej: Jardín — Desayuno"></div>
+        <button class="btn danger sm" id="r-eliminar">Eliminar receta</button>
+      </div>
+      <div class="scroll" style="margin-top:14px">
+        <table id="r-tabla" style="min-width:640px">
+          <thead><tr>
+            <th style="min-width:190px">Ingrediente</th><th style="min-width:120px">Cant. p/ benef.</th>
+            <th style="min-width:120px">Unidad base</th><th style="min-width:110px">Margen (−)</th>
+            <th style="min-width:90px">Margen %</th><th style="width:40px"></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn2 sm" id="r-add-ing">+ Agregar ingrediente</button>
+        <button class="btn" id="r-guardar">Guardar receta</button>
+        <span class="mini" id="r-guardado"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONDICIONES ================= -->
+  <section id="tab-condiciones" class="hide">
+    <div class="card">
+      <div class="flex-between">
+        <div><h2>Condiciones del remito</h2><p class="sub">Chequeos que se marcan en cada análisis, además de las cantidades. Parametrizables.</p></div>
+        <button class="btn sm" id="cond-add">+ Nueva condición</button>
+      </div>
+      <div class="scroll">
+        <table id="cond-tabla" style="min-width:480px">
+          <thead><tr><th style="min-width:280px">Condición</th><th style="width:140px">¿Obligatoria?</th><th style="width:40px"></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="cond-guardar">Guardar condiciones</button>
+        <span class="mini" id="cond-msg"></span>
+      </div>
+      <p class="mini" style="margin-top:8px">Las <b>obligatorias</b> no cumplidas se marcan como problema en el resultado.</p>
+    </div>
+  </section>
+
+  <!-- ================= CONFIG ================= -->
+  <section id="tab-config" class="hide">
+    <div class="grid g3">
+      <div class="card">
+        <h2>Lectura de fotos (IA)</h2>
+        <p class="sub">Opcional. Lee el remito desde una foto y detecta condiciones. La clave se guarda solo en este navegador.</p>
+        <div style="margin-bottom:10px"><label>Proveedor de IA</label>
+          <select id="c-provider">
+            <option value="gemini">Google Gemini — GRATIS</option>
+            <option value="claude">Anthropic Claude (pago)</option>
+          </select></div>
+        <div id="c-gemini-box">
+          <label>API Key de Google Gemini</label><input id="c-gemkey" type="password" placeholder="AIza..." style="font-family:var(--mono)">
+          <div style="margin-top:8px"><label>Modelo</label><select id="c-gemmodel">
+            <option value="gemini-flash-latest">gemini-flash-latest</option>
+            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="gemini-2.0-flash">gemini-2.0-flash</option></select></div>
+          <p class="mini" style="margin-top:8px">🔑 Clave gratis en aistudio.google.com/apikey</p>
+        </div>
+        <div id="c-claude-box" class="hide">
+          <label>API Key de Anthropic</label><input id="c-key" type="password" placeholder="sk-ant-..." style="font-family:var(--mono)">
+          <div style="margin-top:8px"><label>Modelo</label><select id="c-model">
+            <option value="claude-sonnet-5">claude-sonnet-5</option>
+            <option value="claude-opus-4-8">claude-opus-4-8</option>
+            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option></select></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Tolerancia global</h2>
+        <p class="sub">Margen general permitido antes de marcar FALTA (además del margen de cada ingrediente). 0% = estricto.</p>
+        <div style="max-width:120px"><label>Tolerancia (%)</label><input id="c-tol" class="num-big" style="color:var(--ink)" type="number" min="0" step="0.1" value="0"></div>
+      </div>
+      <div class="card">
+        <h2>Datos</h2>
+        <p class="sub">Todo se guarda localmente en este navegador.</p>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <button class="btn2 sm" id="c-export">Exportar recetas (respaldo)</button>
+          <button class="btn2 sm" id="c-import-btn">Importar recetas</button>
+          <input id="c-import" type="file" accept="application/json" class="hide">
+          <button class="btn danger sm" id="c-reset">Restaurar ejemplo</button>
+        </div>
+        <span class="mini" id="c-msg"></span>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Control de Remitos · Municipalidad de José C. Paz · funciona sin conexión (excepto la lectura por IA)</p>
+</div>
+
+<script src="xlsx.full.min.js"></script>
+<script src="pdf.min.js"></script>
+<script>
+"use strict";
+if(typeof pdfjsLib!=="undefined")pdfjsLib.GlobalWorkerOptions.workerSrc="./pdf.worker.min.js";
+/* ---------- unidades ---------- */
+const UNIT_LABEL={kg:"Kilos",g:"Gramos",l:"Litros",ml:"Mililitros",u:"Unidades"};
+const UNIT_ORDER=["kg","g","l","ml","u"];
+const FACTOR={kg:1000,g:1,l:1000,ml:1,u:1};
+const DIM={kg:"masa",g:"masa",l:"volumen",ml:"volumen",u:"conteo"};
+const toCanon=(v,u)=>v*FACTOR[u];
+function fmtCanon(canon,dim){
+  const n=x=>(Math.round(x*1000)/1000).toLocaleString("es-AR");
+  if(dim==="masa")    return canon>=1000?n(canon/1000)+" kg":n(canon)+" g";
+  if(dim==="volumen") return canon>=1000?n(canon/1000)+" L":n(canon)+" ml";
+  return n(canon)+" u";
+}
+function unitOptions(sel){return UNIT_ORDER.map(u=>`<option value="${u}" ${u===sel?"selected":""}>${UNIT_LABEL[u]}</option>`).join("");}
+function norm(s){return (s==null?"":s).toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();}
+function unitFromText(t){const s=norm(t);if(!s)return "g";if(/mililitro|\bml\b/.test(s))return "ml";if(/litro|\blt\b|\bl\b/.test(s))return "l";if(/kilo|\bkg\b/.test(s))return "kg";if(/unidad|saquito|\bu\b|\bun\b/.test(s))return "u";return "g";}
+const STOP=new Set(["marca","x","de","por","la","el","kg","lt","gr","g","ml","l","unidad","unidades","caja","saquitos","saquito"]);
+function tokens(s){return norm(s).split(" ").filter(t=>t&&!STOP.has(t));}
+function matchScore(a,b){const ta=tokens(a),tb=new Set(tokens(b));if(!ta.length)return 0;let h=0;ta.forEach(t=>{if(tb.has(t))h++;});return h/ta.length;}
+
+/* ---------- estado ---------- */
+const LS_RECIPES="rm_recipes_v1",LS_SETTINGS="rm_settings_v1",LS_COND="rm_conditions_v1";
+let recipes=[], settings={provider:"gemini",geminiKey:"",geminiModel:"gemini-flash-latest",apiKey:"",model:"claude-sonnet-5",tol:0}, conditions=[];
+function seedRecipe(){return [{id:"jardin",nombre:"Jardín — Desayuno (ejemplo)",ingredientes:[
+  {id:"i1",nombre:"Mate en saquito",pb:1,unidad:"u",margen:10,margenPct:0},
+  {id:"i2",nombre:"Leche líquida",pb:120,unidad:"ml",margen:0,margenPct:0},
+  {id:"i3",nombre:"Azúcar blanca molida",pb:5,unidad:"g",margen:0,margenPct:0},
+  {id:"i4",nombre:"Pan francés / salvado",pb:30,unidad:"g",margen:0,margenPct:0},
+  {id:"i5",nombre:"Pasta blanda (queso, cremoso)",pb:20,unidad:"g",margen:0,margenPct:0},
+  {id:"i6",nombre:"Fruta no cítrica",pb:167,unidad:"g",margen:0,margenPct:0}
+]}];}
+const SEED_REMITO={i1:{cant:7,unidad:"u",cpu:25,cpuU:"u"},i2:{cant:7,unidad:"u",cpu:1,cpuU:"l"},i3:{cant:1,unidad:"u",cpu:1,cpuU:"kg"},i4:{cant:5.5,unidad:"kg",cpu:"",cpuU:"g"},i5:{cant:3.64,unidad:"kg",cpu:"",cpuU:"g"},i6:{cant:182,unidad:"u",cpu:167,cpuU:"g"}};
+function seedConditions(){return [
+  {id:"cd1",label:"El remito es el ORIGINAL (no una copia)",obligatoria:true},
+  {id:"cd2",label:"Está firmado / conformado",obligatoria:true},
+  {id:"cd3",label:"Tiene fecha",obligatoria:true},
+  {id:"cd4",label:"Tiene sello del proveedor",obligatoria:false}];}
+function load(){
+  try{recipes=JSON.parse(localStorage.getItem(LS_RECIPES))||null;}catch(e){recipes=null;}
+  if(!recipes||!recipes.length)recipes=seedRecipe();
+  try{Object.assign(settings,JSON.parse(localStorage.getItem(LS_SETTINGS))||{});}catch(e){}
+  try{conditions=JSON.parse(localStorage.getItem(LS_COND))||null;}catch(e){conditions=null;}
+  if(!conditions)conditions=seedConditions();
+}
+function saveRecipes(){localStorage.setItem(LS_RECIPES,JSON.stringify(recipes));}
+function saveSettings(){localStorage.setItem(LS_SETTINGS,JSON.stringify(settings));}
+function saveConditions(){localStorage.setItem(LS_COND,JSON.stringify(conditions));}
+let uidC=0;
+function uid(){uidC++;return "x"+uidC+"_"+Math.floor(performance.now())+"_"+recipes.length;}
+function getRecipe(id){return recipes.find(r=>r.id===id);}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    ["analisis","recetas","condiciones","config"].forEach(n=>document.getElementById("tab-"+n).classList.toggle("hide",n!==t.dataset.tab));
+  };
+});
+
+/* ================= RECETAS ================= */
+let editingId=null;
+function renderRecipeSelects(){
+  const opts=recipes.map(r=>`<option value="${r.id}">${r.nombre}</option>`).join("");
+  document.getElementById("r-select").innerHTML=opts;
+  document.getElementById("a-receta").innerHTML=opts;
+  if(!editingId||!getRecipe(editingId))editingId=recipes[0]&&recipes[0].id;
+  document.getElementById("r-select").value=editingId;
+}
+function renderEditor(){
+  const r=getRecipe(editingId);if(!r){document.getElementById("r-editor").classList.add("hide");return;}
+  document.getElementById("r-editor").classList.remove("hide");
+  document.getElementById("r-nombre").value=r.nombre;
+  document.querySelector("#r-tabla tbody").innerHTML=r.ingredientes.map(ing=>`
+    <tr data-id="${ing.id}">
+      <td><input class="ri-nombre" value="${(ing.nombre||"").replace(/"/g,"&quot;")}"></td>
+      <td><input class="ri-pb n" type="number" step="any" min="0" value="${ing.pb}"></td>
+      <td><select class="ri-unidad">${unitOptions(ing.unidad)}</select></td>
+      <td><input class="ri-margen n" type="number" step="any" min="0" value="${ing.margen||0}"></td>
+      <td><input class="ri-margenpct n" type="number" step="any" min="0" value="${ing.margenPct||0}"></td>
+      <td><button class="del ri-del">✕</button></td>
+    </tr>`).join("");
+  document.querySelectorAll("#r-tabla .ri-del").forEach(b=>b.onclick=e=>e.target.closest("tr").remove());
+}
+document.getElementById("r-select").onchange=e=>{editingId=e.target.value;renderEditor();};
+document.getElementById("r-nueva").onclick=()=>{const r={id:uid(),nombre:"Nueva receta",ingredientes:[{id:uid(),nombre:"",pb:0,unidad:"g",margen:0,margenPct:0}]};recipes.push(r);editingId=r.id;saveRecipes();renderRecipeSelects();renderEditor();};
+document.getElementById("r-add-ing").onclick=()=>{
+  const tb=document.querySelector("#r-tabla tbody");const tr=document.createElement("tr");tr.dataset.id=uid();
+  tr.innerHTML=`<td><input class="ri-nombre"></td><td><input class="ri-pb n" type="number" step="any" min="0" value="0"></td>
+    <td><select class="ri-unidad">${unitOptions("g")}</select></td><td><input class="ri-margen n" type="number" step="any" min="0" value="0"></td>
+    <td><input class="ri-margenpct n" type="number" step="any" min="0" value="0"></td><td><button class="del ri-del">✕</button></td>`;
+  tr.querySelector(".ri-del").onclick=()=>tr.remove();tb.appendChild(tr);
+};
+document.getElementById("r-guardar").onclick=()=>{
+  const r=getRecipe(editingId);if(!r)return;
+  r.nombre=document.getElementById("r-nombre").value.trim()||"Sin nombre";
+  r.ingredientes=[...document.querySelectorAll("#r-tabla tbody tr")].map(tr=>({id:tr.dataset.id,nombre:tr.querySelector(".ri-nombre").value.trim(),pb:parseFloat(tr.querySelector(".ri-pb").value)||0,unidad:tr.querySelector(".ri-unidad").value,margen:parseFloat(tr.querySelector(".ri-margen").value)||0,margenPct:parseFloat(tr.querySelector(".ri-margenpct").value)||0})).filter(i=>i.nombre);
+  saveRecipes();renderRecipeSelects();document.getElementById("r-select").value=editingId;
+  const m=document.getElementById("r-guardado");m.textContent="✓ Guardado";setTimeout(()=>m.textContent="",1500);buildRemitoTable();
+};
+document.getElementById("r-eliminar").onclick=()=>{if(recipes.length<=1){alert("Debe existir al menos una receta.");return;}if(!confirm("¿Eliminar esta receta?"))return;recipes=recipes.filter(r=>r.id!==editingId);editingId=recipes[0].id;saveRecipes();renderRecipeSelects();renderEditor();buildRemitoTable();};
+
+function importRecipeExcel(file){
+  const msg=document.getElementById("r-import-msg");
+  if(typeof XLSX==="undefined"){msg.innerHTML='<span style="color:var(--bad)">Falta xlsx.full.min.js junto al index.html.</span>';return;}
+  msg.textContent="Leyendo archivo…";const rd=new FileReader();
+  rd.onload=e=>{try{
+    const wb=XLSX.read(e.target.result,{type:"array"});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,blankrows:false});
+    if(!rows.length)throw new Error("La planilla está vacía.");
+    let hIdx=rows.findIndex(r=>r.some(c=>norm(c).includes("ingred")));if(hIdx<0)hIdx=0;
+    const headers=rows[hIdx].map(c=>String(c==null?"":c));const raw=headers.map(h=>h.toLowerCase());
+    const col=pred=>{for(let i=0;i<headers.length;i++){if(pred(norm(headers[i]),raw[i]))return i;}return -1;};
+    const cName=col(n=>/ingred|alimento|producto|descrip/.test(n)),cUnit=col(n=>/\bunidad\b|\buni\b/.test(n)),cPb=col(n=>/cant|\bpb\b|porcion|benef/.test(n));
+    const cMarPct=col((n,r)=>n.includes("margen")&&r.includes("%")),cMar=col((n,r)=>n.includes("margen")&&!r.includes("%"));
+    if(cName<0||cPb<0)throw new Error("No encontré columnas de Ingrediente y/o Cant. PB.");
+    const num=v=>parseFloat(String(v==null?"":v).replace(",","."))||0;const ings=[];
+    for(let i=hIdx+1;i<rows.length;i++){const r=rows[i];if(!r)continue;const nombre=String(r[cName]==null?"":r[cName]).trim();if(!nombre)continue;
+      ings.push({id:uid(),nombre,pb:num(r[cPb]),unidad:cUnit>=0?unitFromText(r[cUnit]):"g",margen:cMar>=0?num(r[cMar]):0,margenPct:cMarPct>=0?num(r[cMarPct]):0});}
+    if(!ings.length)throw new Error("No encontré ingredientes.");
+    const nombreReceta=(file.name||"Importada").replace(/\.(xlsx|xls|csv)$/i,"");const rec={id:uid(),nombre:nombreReceta,ingredientes:ings};
+    recipes.push(rec);editingId=rec.id;saveRecipes();renderRecipeSelects();document.getElementById("r-select").value=editingId;renderEditor();buildRemitoTable();
+    msg.innerHTML=`✓ Importada "<b>${nombreReceta}</b>" con ${ings.length} ingrediente(s).`;
+  }catch(err){msg.innerHTML=`<span style="color:var(--bad)">Error: ${err.message}</span>`;}};
+  rd.onerror=()=>{msg.innerHTML='<span style="color:var(--bad)">No se pudo leer el archivo.</span>';};rd.readAsArrayBuffer(file);
+}
+document.getElementById("r-import-btn").onclick=()=>document.getElementById("r-import-xls").click();
+document.getElementById("r-import-xls").onchange=e=>{if(e.target.files[0])importRecipeExcel(e.target.files[0]);e.target.value="";};
+
+/* ================= CONDICIONES ================= */
+function renderCondEditor(){
+  document.querySelector("#cond-tabla tbody").innerHTML=conditions.map(c=>`
+    <tr data-id="${c.id}"><td><input class="ce-label" value="${(c.label||"").replace(/"/g,"&quot;")}"></td>
+    <td><select class="ce-oblig"><option value="1" ${c.obligatoria?"selected":""}>Sí</option><option value="0" ${!c.obligatoria?"selected":""}>No</option></select></td>
+    <td><button class="del ce-del">✕</button></td></tr>`).join("");
+  document.querySelectorAll("#cond-tabla .ce-del").forEach(b=>b.onclick=e=>e.target.closest("tr").remove());
+}
+document.getElementById("cond-add").onclick=()=>{const tb=document.querySelector("#cond-tabla tbody");const tr=document.createElement("tr");tr.dataset.id=uid();
+  tr.innerHTML=`<td><input class="ce-label"></td><td><select class="ce-oblig"><option value="1">Sí</option><option value="0" selected>No</option></select></td><td><button class="del ce-del">✕</button></td>`;
+  tr.querySelector(".ce-del").onclick=()=>tr.remove();tb.appendChild(tr);};
+document.getElementById("cond-guardar").onclick=()=>{conditions=[...document.querySelectorAll("#cond-tabla tbody tr")].map(tr=>({id:tr.dataset.id,label:tr.querySelector(".ce-label").value.trim(),obligatoria:tr.querySelector(".ce-oblig").value==="1"})).filter(c=>c.label);
+  saveConditions();renderCondEditor();renderCondChecklist();const m=document.getElementById("cond-msg");m.textContent="✓ Guardado";setTimeout(()=>m.textContent="",1500);};
+
+let condState={};
+function renderCondChecklist(){
+  const box=document.getElementById("a-cond-list");
+  if(!conditions.length){box.innerHTML='<div class="chk"><span class="mini">No hay condiciones. Agregalas en la pestaña Condiciones.</span></div>';return;}
+  box.innerHTML=conditions.map(c=>`<label class="chk"><input type="checkbox" class="cc" data-id="${c.id}" ${condState[c.id]?"checked":""} style="position:absolute;opacity:0;pointer-events:none"><span class="box">${condState[c.id]?"✓":""}</span><span>${c.label}</span><span class="tag ${c.obligatoria?"ob":"op"}">${c.obligatoria?"Obligatoria":"Opcional"}</span></label>`).join("");
+  box.querySelectorAll(".cc").forEach(ch=>ch.onchange=()=>{condState[ch.dataset.id]=ch.checked;ch.nextElementSibling.textContent=ch.checked?"✓":"";});
+}
+
+/* ================= ANÁLISIS ================= */
+let remitoState={},lastResult=null,iaFileName="",iaSource="foto";
+document.getElementById("a-receta").onchange=()=>{remitoState={};buildRemitoTable();};
+function currentAnalysisRecipe(){return getRecipe(document.getElementById("a-receta").value);}
+function buildRemitoTable(){
+  const r=currentAnalysisRecipe();if(!r)return;
+  const cupos=parseFloat(document.getElementById("a-cupos").value)||0;
+  const tb=document.querySelector("#a-remito tbody");
+  tb.innerHTML=r.ingredientes.map(ing=>{
+    const reqCanon=toCanon(ing.pb*cupos,ing.unidad);
+    const st=remitoState[ing.id]||{cant:"",unidad:ing.unidad,cpu:"",cpuU:ing.unidad};const showCPU=st.unidad==="u";
+    return `<tr data-id="${ing.id}">
+      <td><div class="iname">${ing.nombre}</div><div class="base">base: ${UNIT_LABEL[ing.unidad]}</div></td>
+      <td class="num sep" data-label="Requerido">${fmtCanon(reqCanon,DIM[ing.unidad])}</td>
+      <td class="sep" data-label="Entregado"><div class="u-cell"><input class="re-cant n" type="number" step="any" min="0" placeholder="0" value="${st.cant}"><select class="re-unidad">${unitOptions(st.unidad)}</select></div></td>
+      <td data-label="Contenido por unidad"><div class="u-cell re-cpu-wrap ${showCPU?"":"hide"}"><input class="re-cpu n" type="number" step="any" min="0" placeholder="c/u" value="${st.cpu}"><select class="re-cpuU">${unitOptions(st.cpuU||ing.unidad)}</select></div><span class="mini re-cpu-hint ${showCPU?"hide":""}">—</span></td></tr>`;
+  }).join("");
+  tb.querySelectorAll("tr").forEach(tr=>{
+    const id=tr.dataset.id,uSel=tr.querySelector(".re-unidad");
+    const sync=()=>{const showCPU=uSel.value==="u";tr.querySelector(".re-cpu-wrap").classList.toggle("hide",!showCPU);tr.querySelector(".re-cpu-hint").classList.toggle("hide",showCPU);
+      remitoState[id]={cant:tr.querySelector(".re-cant").value,unidad:uSel.value,cpu:tr.querySelector(".re-cpu").value,cpuU:tr.querySelector(".re-cpuU").value};};
+    tr.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",sync));
+  });
+}
+document.getElementById("a-cupos").addEventListener("input",buildRemitoTable);
+document.getElementById("a-limpiar").onclick=()=>{remitoState={};buildRemitoTable();document.getElementById("a-resultado").classList.add("hide");setIaState("vacio");};
+
+function analizar(){
+  const r=currentAnalysisRecipe();const cupos=parseFloat(document.getElementById("a-cupos").value)||0;const tol=(parseFloat(settings.tol)||0)/100;
+  const rows=[];let nBad=0,nOk=0,nWarn=0;
+  r.ingredientes.forEach(ing=>{
+    const st=remitoState[ing.id]||{};const reqDim=DIM[ing.unidad],reqCanon=toCanon(ing.pb*cupos,ing.unidad);
+    const margenFijoCanon=toCanon(parseFloat(ing.margen)||0,ing.unidad);const margenPct=parseFloat(ing.margenPct)||0;const margenCanon=margenFijoCanon+reqCanon*margenPct/100;
+    const cant=parseFloat(st.cant);let delivCanon=null,delivDim=null,estado,diffTxt,delivTxt,nota="";
+    const mp=[];if(margenFijoCanon>0)mp.push("−"+fmtCanon(margenFijoCanon,reqDim));if(margenPct>0)mp.push("−"+margenPct+"%");
+    const reqTxt=fmtCanon(reqCanon,reqDim)+(mp.length?` (margen ${mp.join(" y ")})`:"");
+    if(isNaN(cant)){estado="sin";delivTxt="—";diffTxt="—";}
+    else{if(st.unidad==="u"){const cpu=parseFloat(st.cpu);if(!isNaN(cpu)&&cpu>0){delivDim=DIM[st.cpuU];delivCanon=cant*toCanon(cpu,st.cpuU);}else{delivDim="conteo";delivCanon=cant;}}
+      else{delivDim=DIM[st.unidad];delivCanon=toCanon(cant,st.unidad);}
+      delivTxt=fmtCanon(delivCanon,delivDim);
+      if(delivDim!==reqDim){estado="revisar";diffTxt="unidades incompatibles";}
+      else{const falta=reqCanon-delivCanon,permitido=margenCanon+reqCanon*tol+1e-6;
+        if(delivCanon>=reqCanon-permitido){estado="ok";if(falta>1e-6){diffTxt="−"+fmtCanon(falta,reqDim);nota="dentro del margen";}else diffTxt=falta<-1e-6?"+"+fmtCanon(-falta,reqDim):"exacto";}
+        else{estado="falta";diffTxt="−"+fmtCanon(falta,reqDim);}}}
+    if(estado==="falta")nBad++;else if(estado==="ok")nOk++;else if(estado==="revisar")nWarn++;
+    rows.push({nombre:ing.nombre,req:reqTxt,deliv:delivTxt,diff:diffTxt,estado,nota});
+  });
+  const condResults=conditions.map(c=>({label:c.label,obligatoria:c.obligatoria,cumple:!!condState[c.id]}));
+  const condFaltan=condResults.filter(c=>c.obligatoria&&!c.cumple).length;
+  const meta={receta:r.nombre,cupos,nro:document.getElementById("a-nro").value.trim(),fecha:document.getElementById("a-fecha").value.trim(),prov:document.getElementById("a-prov").value.trim()};
+  lastResult={meta,rows,condResults,nBad,nOk,nWarn,condFaltan};renderResultado();
+}
+function renderResultado(){
+  const {meta,rows,condResults,nBad,nOk,nWarn,condFaltan}=lastResult;
+  document.getElementById("a-res-meta").innerHTML=[meta.nro,meta.fecha,meta.receta,meta.cupos+" cupos"].filter(Boolean).join(" · ");
+  document.getElementById("a-stats").innerHTML=`
+    <div class="stat ok"><div class="n">${nOk}</div><div class="l">Correctos</div></div>
+    <div class="stat bad"><div class="n">${nBad}</div><div class="l">Faltantes</div></div>
+    <div class="stat"><div class="n">${nWarn}</div><div class="l">A revisar</div></div>
+    <div class="stat ${condFaltan?"bad":""}"><div class="n">${condFaltan}</div><div class="l">Condic. sin cumplir</div></div>`;
+  const problemas=nBad+condFaltan;
+  document.getElementById("a-alerta").innerHTML=problemas>0
+    ?`<div class="alert"><b>▼</b><div>${nBad} faltante(s) de cantidad${condFaltan?` y ${condFaltan} condición(es) obligatoria(s) sin cumplir`:""}. Revisá el detalle.</div></div>`
+    :`<div class="alert good"><b>✓</b><div>Sin faltantes ni condiciones incumplidas según lo cargado.</div></div>`;
+  document.querySelector("#a-tabla-res tbody").innerHTML=rows.map(r=>{
+    const badge=r.estado==="falta"?`<span class="badge bad">▼ FALTA</span>`:r.estado==="ok"?`<span class="badge ok">✓ OK</span>${r.nota?`<div class="mini">${r.nota}</div>`:""}`:r.estado==="revisar"?`<span class="badge warn">⚠ REVISAR</span>`:`<span class="badge none">sin datos</span>`;
+    return `<tr class="${r.estado==="falta"?"bad-row":""}"><td><span class="iname">${r.nombre}</span></td><td class="num">${r.req}</td><td class="num">${r.deliv}</td><td class="num">${r.diff}</td><td>${badge}</td></tr>`;
+  }).join("");
+  document.getElementById("a-res-cond").innerHTML=condResults.length?`<h3 class="rescond">Condiciones del remito</h3><div class="condgrid">${condResults.map(c=>{
+    const cls=c.cumple?"okc":(c.obligatoria?"badc":"opc");const g=c.cumple?"✓":(c.obligatoria?"▼":"○");const st=c.cumple?"CUMPLE":(c.obligatoria?"FALTA":"opcional");
+    return `<div class="condchip ${cls}"><span class="g">${g}</span><span>${c.label}</span><span class="st">${st}</span></div>`;}).join("")}</div>`:"";
+  document.getElementById("a-resultado").classList.remove("hide");
+}
+document.getElementById("a-analizar").onclick=analizar;
+document.getElementById("a-print").onclick=()=>window.print();
+
+/* export excel */
+document.getElementById("a-export").onclick=()=>{
+  if(!lastResult){alert("Primero analizá.");return;}if(typeof XLSX==="undefined"){alert("Falta xlsx.full.min.js.");return;}
+  const {meta,rows,condResults,nBad,nOk,nWarn,condFaltan}=lastResult;
+  const aoa=[["CONTROL DE REMITO"],["Proveedor",meta.prov],["Remito N°",meta.nro],["Fecha remito",meta.fecha],["Referencia (receta)",meta.receta],["Cupos",meta.cupos],
+    ["Resumen",`${nOk} correctos · ${nBad} faltantes · ${nWarn} a revisar · ${condFaltan} condiciones sin cumplir`],[],
+    ["Ingrediente","Requerido","Entregado","Diferencia","Estado"],
+    ...rows.map(r=>[r.nombre,r.req,r.deliv,r.diff,r.estado==="falta"?"FALTA":r.estado==="ok"?(r.nota?"OK (margen)":"OK"):r.estado==="revisar"?"REVISAR":"sin datos"]),[],
+    ["Condición","Obligatoria","Cumple"],...condResults.map(c=>[c.label,c.obligatoria?"Sí":"No",c.cumple?"Sí":"No"])];
+  const ws=XLSX.utils.aoa_to_sheet(aoa);ws["!cols"]=[{wch:34},{wch:22},{wch:20},{wch:16},{wch:12}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Control");
+  XLSX.writeFile(wb,"control-remito"+(meta.nro?"-"+meta.nro.replace(/[^\w-]/g,""):"")+".xlsx");
+};
+
+/* ---------- IA panel ---------- */
+function setIaState(s,msg){
+  const b=document.getElementById("a-ia-body");
+  if(s==="vacio"){b.innerHTML=`<div class="ia-empty"><div class="t">Subí o sacá una foto (o un PDF) del remito</div><div class="mini">JPG, PNG o PDF. La IA extrae ítems y condiciones.</div><button class="btn2 sm" id="ia-pick">Elegir foto</button></div>`;document.getElementById("ia-pick").onclick=()=>document.getElementById("a-foto").click();}
+  else if(s==="ready"){b.innerHTML=`<div class="ia-ready"><div class="mini">${iaSource==="pdf"?"PDF":"Foto"}: <b>${iaFileName}</b></div><div class="u-cell"><button class="btn hot sm" id="ia-go">Leer con IA</button><button class="btn2 sm" id="ia-change">Cambiar</button></div></div>`;document.getElementById("ia-go").onclick=leerConIA;document.getElementById("ia-change").onclick=()=>document.getElementById(iaSource==="pdf"?"a-pdf":"a-foto").click();}
+  else if(s==="cargando"){b.innerHTML=`<div class="ia-load"><div class="spinner"></div><div>Leyendo el remito con IA…</div></div>`;}
+  else if(s==="exito"){b.innerHTML=`<div class="ia-ok"><b>✓</b><div>${msg||"Listo"}</div></div>`;}
+  else if(s==="error"){b.innerHTML=`<div class="ia-err"><b>!</b><div>${msg||"Error"}</div></div>`;}
+}
+document.getElementById("a-src-excel").onclick=()=>document.getElementById("a-import-xls").click();
+document.getElementById("a-src-foto").onclick=()=>document.getElementById("a-foto").click();
+document.getElementById("a-src-pdf").onclick=()=>document.getElementById("a-pdf").click();
+document.getElementById("a-src-mano").onclick=()=>setIaState("vacio");
+document.getElementById("a-foto").onchange=e=>{if(e.target.files[0]){iaSource="foto";iaFileName=e.target.files[0].name;setIaState("ready");}};
+document.getElementById("a-pdf").onchange=e=>{if(e.target.files[0]){iaSource="pdf";iaFileName=e.target.files[0].name;setIaState("ready");}};
+
+function buildPrompt(){
+  const condLista=conditions.map((c,i)=>`${i}: ${c.label}`).join("\n");
+  return `Sos un lector de remitos (comprobantes de entrega). Analizá la imagen y devolvé SOLO un JSON válido con esta forma:
+{"items":[{"descripcion":"texto tal cual","cantidad":número,"unidad":"kg|g|l|ml|u","contenidoPorUnidad":número o null,"unidadContenido":"kg|g|l|ml|null"}],
+ "condiciones":[{"i":índice,"cumple":true|false|null}]}
+Para items: si viene por unidades/sachets/cajas usá "u" y poné en contenidoPorUnidad cuánto trae cada uno (ej "x 1 LT" -> 1 y "l"; "x 167 gr" -> 167 y "g"). Kilos "kg", litros "l". Punto decimal.
+Para condiciones evaluá si la imagen cumple cada una (true/false/null):
+${condLista||"(sin condiciones)"}`;
+}
+async function callGemini(b64,media,prompt){
+  const key=settings.geminiKey,model=settings.geminiModel||"gemini-flash-latest";
+  if(!key)throw new Error("Falta la API Key de Gemini (Configuración).");
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{method:"POST",headers:{"x-goog-api-key":key,"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:media,data:b64}},{text:prompt}]}],generationConfig:{responseMimeType:"application/json"}})});
+  if(!res.ok){const t=await res.text();if(res.status===429)throw new Error("Gemini sin cupo por ahora. Probá más tarde.");throw new Error("Gemini ("+res.status+"): "+t.slice(0,160));}
+  const data=await res.json();const text=data&&data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text;
+  if(!text)throw new Error("No pude leer la imagen. Probá con otra foto.");return text;
+}
+async function callClaude(b64,media,prompt){
+  if(!settings.apiKey)throw new Error("Falta la API Key de Claude (Configuración).");
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":settings.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:settings.model,max_tokens:1500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:media,data:b64}},{type:"text",text:prompt}]}]})});
+  if(!res.ok){const t=await res.text();throw new Error("Claude ("+res.status+"): "+t.slice(0,160));}
+  const data=await res.json();return (data.content||[]).map(c=>c.text||"").join("");
+}
+/* núcleo compartido: manda una imagen (foto o render de PDF) a la IA y aplica el resultado */
+async function analizarImagen(b64,media){
+  const prompt=buildPrompt();
+  const txt=settings.provider==="claude"?await callClaude(b64,media,prompt):await callGemini(b64,media,prompt);
+  const json=JSON.parse(txt.slice(txt.indexOf("{"),txt.lastIndexOf("}")+1));
+  aplicarExtraccion(json.items||[]);
+  let nCond=0;(json.condiciones||[]).forEach(c=>{const cond=conditions[c.i];if(cond&&c.cumple===true){condState[cond.id]=true;nCond++;}});
+  renderCondChecklist();
+  setIaState("exito",`Leídos ${(json.items||[]).length} ítem(s) y ${nCond} condición(es). Revisá antes de analizar.`);
+}
+/* PDF -> render de la 1ª página a imagen base64 (pdf.js), mismo formato que fileToB64 */
+async function pdfAImagen(file){
+  if(typeof pdfjsLib==="undefined")throw new Error("Falta pdf.min.js.");
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  const page=await pdf.getPage(1);
+  const viewport=page.getViewport({scale:200/72}); // ~200 DPI
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.floor(viewport.width);canvas.height=Math.floor(viewport.height);
+  await page.render({canvasContext:canvas.getContext("2d"),viewport}).promise;
+  return canvas.toDataURL("image/png").split(",")[1];
+}
+function leerConIA(){return iaSource==="pdf"?leerPdf():leerFoto();}
+async function leerPdf(){
+  const file=document.getElementById("a-pdf").files[0];
+  if(!file){setIaState("vacio");return;}
+  setIaState("cargando");
+  try{
+    const b64=await pdfAImagen(file);
+    await analizarImagen(b64,"image/png");
+  }catch(e){setIaState("error",e.message);}
+}
+async function leerFoto(){
+  const file=document.getElementById("a-foto").files[0];
+  if(!file){setIaState("vacio");return;}
+  setIaState("cargando");
+  try{
+    const b64=await fileToB64(file);const media=file.type||"image/jpeg";
+    await analizarImagen(b64,media);
+  }catch(e){setIaState("error",e.message);}
+}
+function aplicarExtraccion(items){
+  const r=currentAnalysisRecipe();remitoState={};const usados=new Set();
+  r.ingredientes.forEach(ing=>{let best=null,bestScore=0,bestIdx=-1;
+    items.forEach((it,idx)=>{if(usados.has(idx))return;const s=matchScore(ing.nombre,it.descripcion);if(s>bestScore){bestScore=s;best=it;bestIdx=idx;}});
+    if(best&&bestScore>0){usados.add(bestIdx);let unidad=(best.unidad||"").toLowerCase();if(!UNIT_LABEL[unidad])unidad=ing.unidad;
+      const st={cant:best.cantidad==null?"":best.cantidad,unidad,cpu:"",cpuU:ing.unidad};
+      if(unidad==="u"&&best.contenidoPorUnidad){st.cpu=best.contenidoPorUnidad;let cu=(best.unidadContenido||"").toLowerCase();st.cpuU=UNIT_LABEL[cu]?cu:ing.unidad;}
+      remitoState[ing.id]=st;}});
+  buildRemitoTable();
+}
+function fileToB64(file){return new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result.split(",")[1]);rd.onerror=rej;rd.readAsDataURL(file);});}
+
+function importRemitoExcel(file){
+  if(typeof XLSX==="undefined"){setIaState("error","Falta xlsx.full.min.js.");return;}
+  setIaState("cargando");const rd=new FileReader();
+  rd.onload=e=>{try{
+    const wb=XLSX.read(e.target.result,{type:"array"});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,blankrows:false});
+    if(!rows.length)throw new Error("La planilla está vacía.");
+    let hIdx=rows.findIndex(r=>r.some(c=>{const n=norm(c);return n.includes("ingred")||n.includes("descrip")||n.includes("producto");}));if(hIdx<0)hIdx=0;
+    const headers=rows[hIdx].map(c=>String(c==null?"":c));const raw=headers.map(h=>norm(h));const col=pred=>{for(let i=0;i<headers.length;i++){if(pred(raw[i]))return i;}return -1;};
+    const cDesc=col(n=>/ingred|descrip|producto|alimento|item|articulo/.test(n));let cCant=col(n=>/cantidad|entrega/.test(n));if(cCant<0)cCant=col(n=>/\bcant\b/.test(n)&&!n.includes("conten"));
+    const cUnit=col(n=>(n.includes("unidad")||/\buni\b/.test(n))&&!n.includes("conten")),cCont=col(n=>n.includes("conten")&&!n.startsWith("unidad")),cContU=col(n=>n.includes("conten")&&n.startsWith("unidad"));
+    if(cDesc<0||cCant<0)throw new Error("No encontré columnas de Ingrediente/Descripción y Cantidad.");
+    const num=v=>{const x=parseFloat(String(v==null?"":v).replace(",","."));return isNaN(x)?null:x;};const items=[];
+    for(let i=hIdx+1;i<rows.length;i++){const r=rows[i];if(!r)continue;const desc=String(r[cDesc]==null?"":r[cDesc]).trim();if(!desc)continue;const cant=num(r[cCant]);if(cant==null)continue;
+      const it={descripcion:desc,cantidad:cant,unidad:cUnit>=0?unitFromText(r[cUnit]):"u"};if(cCont>=0&&num(r[cCont])!=null){it.contenidoPorUnidad=num(r[cCont]);it.unidadContenido=cContU>=0?unitFromText(r[cContU]):"u";}items.push(it);}
+    if(!items.length)throw new Error("No encontré filas con datos.");
+    aplicarExtraccion(items);setIaState("exito",`Cargados ${items.length} ítem(s) del remito (Excel). Revisá antes de analizar.`);
+  }catch(err){setIaState("error",err.message);}};
+  rd.onerror=()=>{setIaState("error","No se pudo leer el archivo.");};rd.readAsArrayBuffer(file);
+}
+document.getElementById("a-import-xls").onchange=e=>{if(e.target.files[0])importRemitoExcel(e.target.files[0]);e.target.value="";};
+
+/* ================= CONFIG ================= */
+function toggleProviderBoxes(){const g=settings.provider!=="claude";document.getElementById("c-gemini-box").classList.toggle("hide",!g);document.getElementById("c-claude-box").classList.toggle("hide",g);}
+function loadConfigUI(){
+  document.getElementById("c-provider").value=settings.provider||"gemini";
+  document.getElementById("c-gemkey").value=settings.geminiKey||"";
+  document.getElementById("c-gemmodel").value=settings.geminiModel||"gemini-flash-latest";
+  document.getElementById("c-key").value=settings.apiKey||"";document.getElementById("c-model").value=settings.model||"claude-sonnet-5";
+  document.getElementById("c-tol").value=settings.tol||0;toggleProviderBoxes();
+}
+document.getElementById("c-provider").addEventListener("change",e=>{settings.provider=e.target.value;saveSettings();toggleProviderBoxes();});
+document.getElementById("c-gemkey").addEventListener("input",e=>{settings.geminiKey=e.target.value.trim();saveSettings();});
+document.getElementById("c-gemmodel").addEventListener("change",e=>{settings.geminiModel=e.target.value;saveSettings();});
+document.getElementById("c-key").addEventListener("input",e=>{settings.apiKey=e.target.value.trim();saveSettings();});
+document.getElementById("c-model").addEventListener("change",e=>{settings.model=e.target.value;saveSettings();});
+document.getElementById("c-tol").addEventListener("input",e=>{settings.tol=parseFloat(e.target.value)||0;saveSettings();});
+document.getElementById("c-export").onclick=()=>{const blob=new Blob([JSON.stringify(recipes,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="recetas-remitos.json";a.click();};
+document.getElementById("c-import-btn").onclick=()=>document.getElementById("c-import").click();
+document.getElementById("c-import").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const arr=JSON.parse(rd.result);if(Array.isArray(arr)&&arr.length){recipes=arr;editingId=recipes[0].id;saveRecipes();renderRecipeSelects();renderEditor();buildRemitoTable();msg("Recetas importadas.");}else msg("Archivo inválido.");}catch(err){msg("Error al leer el archivo.");}};rd.readAsText(f);};
+document.getElementById("c-reset").onclick=()=>{if(!confirm("Esto reemplaza las recetas por la de ejemplo. ¿Continuar?"))return;recipes=seedRecipe();editingId=recipes[0].id;saveRecipes();renderRecipeSelects();renderEditor();remitoState=cloneSeedRemito();buildRemitoTable();msg("Receta de ejemplo restaurada.");};
+function cloneSeedRemito(){const o={};for(const k in SEED_REMITO)o[k]={...SEED_REMITO[k]};return o;}
+function msg(t){const m=document.getElementById("c-msg");m.textContent=t;setTimeout(()=>m.textContent="",2000);}
+
+/* ================= init ================= */
+load();renderRecipeSelects();renderEditor();renderCondEditor();renderCondChecklist();loadConfigUI();
+if(document.getElementById("a-receta").value==="jardin")remitoState=cloneSeedRemito();
+buildRemitoTable();setIaState("vacio");
+
+/* ================= PWA: service worker ================= */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

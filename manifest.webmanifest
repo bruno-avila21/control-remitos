@@ -1,0 +1,16 @@
+{
+  "name": "Control de Remitos — Municipalidad",
+  "short_name": "Remitos",
+  "description": "Verificación de entregas de comedores escolares contra la receta requerida.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f4f5",
+  "theme_color": "#1d5aa8",
+  "lang": "es",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
