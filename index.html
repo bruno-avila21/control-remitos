@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <link href="fonts/public-sans.css" rel="stylesheet">
+<script>try{if(sessionStorage.rm_splashed)document.documentElement.classList.add("no-splash");sessionStorage.rm_splashed="1";}catch(e){}</script>
 <style>
   :root{
     --font:'Public Sans',system-ui,-apple-system,sans-serif;
@@ -170,6 +171,14 @@
   .hide{display:none}
   details summary{cursor:pointer;font-weight:600;color:var(--brand);font-size:12.5px}
 
+  /* ---------- splash de arranque ---------- */
+  #splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#fff;padding:24px;animation:splashFade 2.2s ease forwards}
+  #splash img{width:min(86vw,420px);height:auto;animation:splashLogo 2.2s ease forwards}
+  .no-splash #splash{display:none!important}
+  @keyframes splashFade{0%{opacity:0}18%{opacity:1}66%{opacity:1}100%{opacity:0;visibility:hidden}}
+  @keyframes splashLogo{0%{opacity:0;transform:scale(.965)}18%{opacity:1;transform:scale(1)}66%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.012)}}
+  @media (prefers-reduced-motion:reduce){#splash,#splash img{animation-duration:.9s}}
+
   /* ---------- móvil ---------- */
   @media (max-width:640px){
     .container{padding:12px 12px 96px}
@@ -214,6 +223,7 @@
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true"><img src="Logo.png" alt=""></div>
 <header class="app-header">
   <img src="Logo.png" alt="Municipalidad" class="logo" onerror="this.style.display='none'">
   <div class="divider"></div>
@@ -821,6 +831,11 @@ function msg(t){const m=document.getElementById("c-msg");m.textContent=t;setTime
 load();renderRecipeSelects();renderEditor();renderCondEditor();renderCondChecklist();loadConfigUI();
 if(document.getElementById("a-receta").value==="jardin")remitoState=cloneSeedRemito();
 buildRemitoTable();setIaState("vacio");
+
+/* ================= splash: quitar del DOM al terminar ================= */
+(function(){const s=document.getElementById("splash");if(!s)return;
+  if(document.documentElement.classList.contains("no-splash")){s.remove();return;}
+  setTimeout(()=>s.remove(),2300);})();
 
 /* ================= PWA: service worker ================= */
 if("serviceWorker" in navigator){
